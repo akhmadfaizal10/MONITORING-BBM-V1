@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Api;
-
+use Illuminate\Support\Facades\Http;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -40,48 +40,38 @@ class MonitoringController extends Controller
             ])
             ->orderBy('recorded_at', 'asc')
             ->get();
+$fuelIn = 0;
+$fuelOut = 0;
 
-        $fuelIn  = 0;
-        $fuelOut = 0;
+// Ambil record terakhir (bukan per menit, tapi bener-bener terakhir saja)
+$lastRecord = DB::table($nikTable)
+    ->orderBy('recorded_at', 'desc')
+    ->first();
 
-        if ($lastMinuteRecords->count() > 0) {
-            // ambil level awal menit itu
-            $prevLevel = $lastMinuteRecords->first()->fuel_level;
+if ($lastRecord) {
+    $selisih = $data['fuel_level'] - $lastRecord->fuel_level;
 
-            foreach ($lastMinuteRecords as $rec) {
-                $selisih = $rec->fuel_level - $prevLevel;
+    if ($selisih > 0) {
+        $fuelIn = $selisih;   // berarti pengisian BBM
+    } elseif ($selisih < 0) {
+        $fuelOut = abs($selisih); // berarti konsumsi/pencurian
+    }
+}
+    
+       $status = 'unknown';
+try {
+    $response = Http::post('http://127.0.0.1:5001/predict', [
+        'fuel_level' => $data['fuel_level'],
+        'fuel_in'    => $fuelIn,
+        'fuel_out'   => $fuelOut,
+    ]);
 
-                if ($selisih > 0) {
-                    $fuelIn += $selisih;
-                } elseif ($selisih < 0) {
-                    $fuelOut += abs($selisih);
-                }
-
-                $prevLevel = $rec->fuel_level;
-            }
-
-            // Tambahkan perbandingan terakhir (record terbaru yang dikirim user sekarang)
-            $selisih = $data['fuel_level'] - $prevLevel;
-            if ($selisih > 0) {
-                $fuelIn += $selisih;
-            } elseif ($selisih < 0) {
-                $fuelOut += abs($selisih);
-            }
-        } else {
-            // fallback kalau belum ada record sama sekali
-            $lastRecord = DB::table($nikTable)
-                ->orderBy('recorded_at', 'desc')
-                ->first();
-
-            if ($lastRecord) {
-                $selisih = $data['fuel_level'] - $lastRecord->fuel_level;
-                if ($selisih > 0) {
-                    $fuelIn = $selisih;
-                } elseif ($selisih < 0) {
-                    $fuelOut = abs($selisih);
-                }
-            }
-        }
+    if ($response->successful()) {
+        $status = $response->json()['prediction'] ?? 'unknown';
+    }
+} catch (\Exception $e) {
+    $status = 'error'; // fallback kalau Python service mati
+}
 
         // Insert ke tabel perusahaan
         DB::table($companyTable)->insert([
@@ -90,6 +80,7 @@ class MonitoringController extends Controller
             'fuel_level'  => $data['fuel_level'],
             'fuel_in'     => $fuelIn,
             'fuel_out'    => $fuelOut,
+            'status' => $status,
             'location'    => $location,
             'recorded_at' => $recordedAt,
             'created_at'  => now(),
@@ -103,6 +94,7 @@ class MonitoringController extends Controller
     'fuel_level'  => $data['fuel_level'],
     'fuel_in'     => $fuelIn,
     'fuel_out'    => $fuelOut,
+    'status' => $status,
     'location'    => $location,
     'recorded_at' => $recordedAt,
     'created_at'  => now(),
@@ -115,6 +107,7 @@ class MonitoringController extends Controller
             'id'            => $id,
             'fuel_in'       => $fuelIn,
             'fuel_out'      => $fuelOut,
+            'status' => $status,
             'recorded_at'   => $recordedAt,
         ], 201);
     }

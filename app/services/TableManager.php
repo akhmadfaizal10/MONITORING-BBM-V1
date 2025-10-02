@@ -24,17 +24,18 @@ class TableManager
         if (!Schema::hasTable($table)) {
             Schema::create($table, function (Blueprint $t) {
                 $t->id();
-                $t->string('nik');               // NIK kendaraan
-                $t->string('vehicle_id');        // ID kendaraan unik
-                $t->float('fuel_level');         // level BBM (liter)
-                $t->float('fuel_in')->default(0);  // pengisian (liter)
-                $t->float('fuel_out')->default(0); // konsumsi (liter)
+                $t->string('nik');                  // NIK kendaraan
+                $t->string('vehicle_id');           // ID kendaraan unik
+                $t->float('fuel_level');            // level BBM (liter)
+                $t->float('fuel_in')->default(0);   // pengisian (liter)
+                $t->float('fuel_out')->default(0);  // konsumsi (liter)
+                $t->string('status')->default('normal'); // hasil deteksi ML
                 $t->string('location')->nullable(); // lokasi GPS / area
-                $t->timestamp('recorded_at');    // waktu data tercatat
-                $t->timestamps();                // created_at, updated_at
+                $t->timestamp('recorded_at');       // waktu data tercatat
+                $t->timestamps();                   // created_at, updated_at
             });
         } else {
-            // Kalau tabel sudah ada, pastikan kolom utama tetap ada
+            // sync kolom wajib
             self::syncCompanyColumns($table);
         }
 
@@ -48,17 +49,18 @@ class TableManager
         if (!Schema::hasTable($table)) {
             Schema::create($table, function (Blueprint $t) {
                 $t->id();
-                $t->string('nik');                // NIK kendaraan
-                $t->string('vehicle_id');         // ID kendaraan unik
-                $t->float('fuel_level');          // level BBM (liter)
-                $t->float('fuel_in')->default(0); // pengisian (liter)
-                $t->float('fuel_out')->default(0);// konsumsi (liter)
-                $t->string('location')->nullable();// lokasi GPS / area
-                $t->timestamp('recorded_at');     // waktu data tercatat
-                $t->timestamps();                 // created_at, updated_at
+                $t->string('nik');                  // NIK kendaraan
+                $t->string('vehicle_id');           // ID kendaraan unik
+                $t->float('fuel_level');            // level BBM (liter)
+                $t->float('fuel_in')->default(0);   // pengisian (liter)
+                $t->float('fuel_out')->default(0);  // konsumsi (liter)
+                $t->string('status')->default('null'); // hasil deteksi ML
+                $t->string('location')->nullable(); // lokasi GPS / area
+                $t->timestamp('recorded_at');       // waktu data tercatat
+                $t->timestamps();                   // created_at, updated_at
             });
         } else {
-            // Kalau tabel sudah ada, pastikan kolom utama tetap ada
+            // sync kolom wajib
             self::syncNikColumns($table);
         }
 
@@ -69,14 +71,13 @@ class TableManager
     protected static function syncCompanyColumns($table)
     {
         if (!Schema::hasColumn($table, 'nik')) {
-            Schema::table($table, function (Blueprint $t) {
-                $t->string('nik')->after('id');
-            });
+            Schema::table($table, fn(Blueprint $t) => $t->string('nik')->after('id'));
         }
         if (!Schema::hasColumn($table, 'vehicle_id')) {
-            Schema::table($table, function (Blueprint $t) {
-                $t->string('vehicle_id')->after('nik');
-            });
+            Schema::table($table, fn(Blueprint $t) => $t->string('vehicle_id')->after('nik'));
+        }
+        if (!Schema::hasColumn($table, 'status')) {
+            Schema::table($table, fn(Blueprint $t) => $t->string('status')->default('normal')->after('fuel_out'));
         }
     }
 
@@ -84,14 +85,13 @@ class TableManager
     protected static function syncNikColumns($table)
     {
         if (!Schema::hasColumn($table, 'nik')) {
-            Schema::table($table, function (Blueprint $t) {
-                $t->string('nik')->after('id');
-            });
+            Schema::table($table, fn(Blueprint $t) => $t->string('nik')->after('id'));
         }
         if (!Schema::hasColumn($table, 'vehicle_id')) {
-            Schema::table($table, function (Blueprint $t) {
-                $t->string('vehicle_id')->after('nik');
-            });
+            Schema::table($table, fn(Blueprint $t) => $t->string('vehicle_id')->after('nik'));
+        }
+        if (!Schema::hasColumn($table, 'status')) {
+            Schema::table($table, fn(Blueprint $t) => $t->string('status')->default('normal')->after('fuel_out'));
         }
     }
 }
