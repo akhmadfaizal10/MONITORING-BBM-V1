@@ -5,15 +5,38 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Routing\Controller as BaseController;
 
-class DATAController extends Controller
+class DATAController extends BaseController
 {
-    // Halaman utama dashboard
-    public function index()
+    public function __construct()
     {
-        return view('DATA');
+        $this->middleware('auth');
     }
 
+    public function index()
+    {
+        $user = Auth::user();
+        $role = $user->role;
+
+        if ($role === 'admin') {
+            $tables = DB::select('SHOW TABLES');
+            $companies = [];
+            foreach ($tables as $table) {
+                $name = array_values((array)$table)[0];
+                if (str_starts_with($name, 'company_') && !str_contains($name, '_k')) {
+                    $companies[] = [
+                        'name' => ucwords(str_replace('_', ' ', str_replace('company_', '', $name))),
+                        'table' => $name
+                    ];
+                }
+            }
+            return view('data', compact('companies', 'role'));
+        }
+
+        return redirect('/');
+    }
     // API: Ambil daftar perusahaan
     public function companies()
     {

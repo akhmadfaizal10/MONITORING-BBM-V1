@@ -5,7 +5,7 @@
     }
 
     body {
-      font-family: 'JetBrains Mono', 'Consolas', 'Monaco', monospace; /* Monospace utama untuk feel teknis/coding */
+       font-family: 'Inter', sans-serif;
       background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
       color: #2c3e50;
       line-height: 1.5; /* Dikurangi dari 1.6 untuk lebih compact */

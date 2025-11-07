@@ -1,0 +1,67 @@
+:root {
+    --sidebar-width: 250px;
+}
+
+body {
+    overflow-x: hidden;
+    font-family: 'Inter', sans-serif;
+}
+
+#sidebar-wrapper {
+    min-height: 100vh;
+    width: var(--sidebar-width);
+    margin-left: calc(-1 * var(--sidebar-width));
+    transition: margin 0.25s ease-out;
+}
+
+#sidebar-wrapper .sidebar-heading {
+    height: 60px; /* Sesuaikan dengan tinggi topbar */
+    font-size: 1.2rem;
+}
+
+#sidebar-wrapper .list-group {
+    width: var(--sidebar-width);
+}
+
+#page-content-wrapper {
+    min-width: 100vw;
+}
+
+#wrapper.toggled #sidebar-wrapper {
+    margin-left: 0;
+}
+
+/* Penyesuaian saat sidebar terbuka */
+@media (min-width: 768px) {
+    #sidebar-wrapper {
+        margin-left: 0;
+    }
+
+    #page-content-wrapper {
+        min-width: 0;
+        width: 100%;
+    }
+
+    #wrapper.toggled #sidebar-wrapper {
+        margin-left: calc(-1 * var(--sidebar-width));
+    }
+}
+
+/* Styling kustom untuk item sidebar */
+.list-group-item.active {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: #fff;
+}
+
+.list-group-item-action.list-group-item-dark {
+    color: #adb5bd;
+    background-color: #212529;
+    border: none;
+}
+
+.list-group-item-action.list-group-item-dark:hover,
+.list-group-item-action.list-group-item-dark:focus {
+    color: #fff;
+    background-color: #343a40;
+}

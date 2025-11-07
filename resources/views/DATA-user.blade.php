@@ -2,38 +2,44 @@
 
 @section('title', 'DATA VIEW')
 @section('page_title', 'DATA VIEW')
+
 @push('styles')
     <link rel="stylesheet" href="{{ asset('style.css') }}">
 @endpush
+
 @section('content')
   <div class="form-section">
     <h2 class="form-title">Select Company & Table</h2>
     <div class="form-row">
       <div class="form-group">
         <label for="companySelect">Company</label>
-        <select id="companySelect"></select>
+        <select id="companySelect" disabled>
+          <option value="">-- Memuat... --</option>
+        </select>
       </div>
       <div class="form-group">
         <label for="tableSelect">Table (Company / Per-NIK)</label>
-        <select id="tableSelect"></select>
+        <select id="tableSelect">
+          <option value="">-- Pilih Table --</option>
+        </select>
       </div>
     </div>
 
     <div class="button-group">
       <button class="btn btn-primary" id="loadBtn">
-        <i class="fas fa-sync-alt"></i> Load
+        Load
       </button>
       <button class="btn btn-secondary" id="exportBtn">
-        <i class="fas fa-download"></i> Export
+        Export
       </button>
       <button class="btn btn-warning" id="clearTableBtn">
-        <i class="fas fa-eraser"></i> Clear
+        Clear
       </button>
       <button class="btn btn-danger" id="deleteTableBtn">
-        <i class="fas fa-trash"></i> Delete Table
+        Delete Table
       </button>
       <button class="btn btn-danger" id="deleteCompanyBtn">
-        <i class="fas fa-trash"></i> Delete Company
+        Delete Company
       </button>
     </div>
   </div>
@@ -56,31 +62,30 @@
 
 @push('scripts')
 <script>
-  const apiBase = "{{ url('/DATA/api') }}";
+  // GANTI API KE USER-ONLY
+  const apiBase = "/data-user";  // ← HANYA INI YANG DIUBAH
   let state = { table: null, page: 1, per_page: 50, total: 0, search: '' };
 
+  // Load perusahaan user (otomatis)
   async function fetchCompanies() {
-    const r = await fetch(apiBase + '/companies');
-    const arr = await r.json();
+    const r = await fetch(apiBase + '/company');
+    const company = await r.json();
     const sel = document.getElementById('companySelect');
-    sel.innerHTML = '<option value="">-- Select company --</option>';
-    arr.forEach(c => {
-      const opt = document.createElement('option');
-      opt.value = c.table;
-      opt.text = c.name;
-      sel.appendChild(opt);
-    });
+    sel.innerHTML = `<option value="${company.table}">${company.name}</option>`;
+    sel.disabled = true; // Tidak bisa pilih lain
+    await fetchCompanyTables(company.table);
   }
 
+  // Load tabel NIK dari perusahaan user
   async function fetchCompanyTables(companyTable) {
-    const r = await fetch(apiBase + '/company-tables?company=' + encodeURIComponent(companyTable));
+    const r = await fetch(apiBase + '/tables');
     const arr = await r.json();
     const sel = document.getElementById('tableSelect');
-    sel.innerHTML = '<option value="">-- Select table --</option>';
+    sel.innerHTML = '<option value="">-- Pilih Table --</option>';
     arr.forEach(t => {
       const opt = document.createElement('option');
-      opt.value = t;
-      opt.text = t;
+      opt.value = t.table;
+      opt.text = t.nik;
       sel.appendChild(opt);
     });
   }
@@ -150,9 +155,13 @@
     if (!tbl) return alert('Please select a table first');
     if (!confirm(`Are you sure you want to clear all data from table ${tbl}?`)) return;
 
-    const r = await fetch(`${apiBase}/clear-table?table=${encodeURIComponent(tbl)}`, {
-      method: 'DELETE',
-      headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+    const r = await fetch(`${apiBase}/clear-table`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content 
+      },
+      body: JSON.stringify({ table: tbl })
     });
     const json = await r.json();
     alert(json.message || 'Operation completed');
@@ -165,34 +174,38 @@
     if (!tbl) return alert('Please select a table first');
     if (!confirm(`Are you sure you want to DELETE table ${tbl}?`)) return;
 
-    const r = await fetch(`${apiBase}/delete-table?table=${encodeURIComponent(tbl)}`, {
-      method: 'DELETE',
-      headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+    const r = await fetch(`${apiBase}/delete-table`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content 
+      },
+      body: JSON.stringify({ table: tbl })
     });
     const json = await r.json();
     alert(json.message || 'Operation completed');
-    await fetchCompanies();
-    document.getElementById('tableSelect').innerHTML = '<option value="">-- Select table --</option>';
+    await fetchCompanyTables(document.getElementById('companySelect').value);
     document.getElementById('tableContainer').innerHTML = '';
     document.getElementById('recordCount').textContent = 0;
   });
 
-  // Delete company
+  // Delete company (hanya milik user)
   document.getElementById('deleteCompanyBtn').addEventListener('click', async () => {
     const company = document.getElementById('companySelect').value;
-    if (!company) return alert('Please select a company first');
-    if (!confirm(`Are you sure you want to DELETE all data & tables for company ${company}?`)) return;
+    if (!company) return alert('Company tidak tersedia');
+    if (!confirm(`Are you sure you want to DELETE all data & tables for your company?`)) return;
 
-    const r = await fetch(`${apiBase}/delete-company?company=${encodeURIComponent(company)}`, {
-      method: 'DELETE',
-      headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+    const r = await fetch(`${apiBase}/delete-company`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content 
+      },
+      body: JSON.stringify({ company })
     });
     const json = await r.json();
     alert(json.message || 'Operation completed');
-    await fetchCompanies();
-    document.getElementById('tableSelect').innerHTML = '<option value="">-- Select table --</option>';
-    document.getElementById('tableContainer').innerHTML = '';
-    document.getElementById('recordCount').textContent = 0;
+    location.reload();
   });
 
   // Init
