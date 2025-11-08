@@ -35,14 +35,14 @@ class FuelMonitoringSeeder extends Seeder
 
         // 🔹 Daftar perusahaan
         $companies = [
-            'Perusahaan Udinus',
-            'Perusahaan Pro Aneka Cipta',
-            'Perusahaan Punyaku'
+            'Udinus',
+            'ProAnekaCipta'
+            ,'ppsdm',
         ];
 
         foreach ($companies as $company) {
             // Tiap perusahaan 2–4 kendaraan
-            $vehicleCount = rand(2, 4);
+            $vehicleCount = rand(2, 15);
 
             for ($v = 1; $v <= $vehicleCount; $v++) {
                 $nik = 'K' . str_pad($v, 2, '0', STR_PAD_LEFT);

@@ -12,6 +12,8 @@ use App\Http\Controllers\User\UserTrackingController;
 use App\Http\Controllers\User\UserDataController;
 use App\Http\Controllers\AnalysisController;
 // === LOGOUT ===
+        Route::get('/dashboard/data', [DashboardController::class, 'getData'])->name('dashboard.data');
+
 Route::post('/logout', function () {
     Auth::logout();
     request()->session()->invalidate();
@@ -26,7 +28,6 @@ Route::post('register/action', [RegisterController::class, 'actionregister'])->n
 // === LOGIN ===
 Route::get('/', [LoginController::class, 'login'])->name('login');
 Route::post('/actionlogin', [LoginController::class, 'actionlogin'])->name('actionlogin');
-        Route::get('/dashboard/data', [DashboardController::class, 'getData'])->name('dashboard.data');
 // === PROTECTED ROUTES ===
 Route::middleware(['auth'])->group(function () {
     Route::get('/actionlogout', [LoginController::class, 'actionlogout'])->name('actionlogout');

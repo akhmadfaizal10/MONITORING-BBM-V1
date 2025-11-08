@@ -3,131 +3,102 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Services\TableManager;
-use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use App\Services\TableManager;
+use Carbon\Carbon;
 
 class AnalysisController extends Controller
 {
     public function index(Request $request)
     {
         $user = Auth::user();
+        $company = $user->company;
 
-        // Kalau admin, bisa pilih company
-        $selectedCompany = $request->input('company', $user->company);
+        // 🔹 Ambil parameter filter
+        $start = $request->input('start', Carbon::now()->subDays(7)->startOfDay());
+        $end   = $request->input('end', Carbon::now()->endOfDay());
+        $nik   = $request->input('nik');
 
-        // Ambil data kendaraan
-        $vehicles = $this->getVehicleData($user, $selectedCompany);
+        // 🔹 Ambil nama tabel sesuai company/nik
+        $table = $nik
+            ? TableManager::getNikTable($company, $nik)
+            : TableManager::getCompanyTable($company);
 
-        // Analisis data BBM
-        $fuelData = $this->analyzeFuelData($vehicles, $user);
-
-        // Ambil data tren berdasarkan tanggal dan company
-        $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
-
-        $fuelData['trend_data'] = $this->getTrendData($vehicles, $selectedCompany, $startDate, $endDate);
-
-        // Ambil semua company kalau admin
-        $companies = $user->role === 'admin' ? $this->getAllCompanies() : [];
-
-        return view('analysis.index', compact('fuelData', 'companies', 'selectedCompany'));
-    }
-
-    private function getAllCompanies()
-    {
-        // Ambil semua tabel yang prefix-nya "company_"
-        $tables = DB::getSchemaBuilder()->getAllTables();
-        $companies = [];
-
-        foreach ($tables as $tableObj) {
-            $tableName = is_array($tableObj) ? array_values($tableObj)[0] : $tableObj->name ?? $tableObj;
-            if (strpos($tableName, 'company_') === 0) {
-                $companies[] = str_replace('company_', '', $tableName);
-            }
+        // 🔹 Cek tabel
+        if (!DB::getSchemaBuilder()->hasTable($table)) {
+            return view('analysis', [
+                'message' => "Tabel $table belum memiliki data.",
+                'company' => $company,
+                'start' => $start,
+                'end' => $end,
+                'nik' => $nik
+            ]);
         }
 
-        return $companies;
-    }
+        // 🔹 Ambil data
+        $records = DB::table($table)
+            ->whereBetween('recorded_at', [$start, $end])
+            ->orderBy('recorded_at', 'asc')
+            ->get();
 
-    private function getVehicleData($user, $selectedCompany)
-    {
-        if ($user->role === 'admin') {
-            return $this->getVehiclesByCompany($selectedCompany);
+        if ($records->isEmpty()) {
+            return view('analysis', [
+                'message' => "Tidak ada data dari $start sampai $end",
+                'company' => $company,
+                'start' => $start,
+                'end' => $end,
+                'nik' => $nik
+            ]);
         }
 
-        return $this->getVehiclesByCompany($user->company);
-    }
+        // ==============================
+        // 📊 Hitung Data
+        // ==============================
+        $fuelUsedPerHour = [];
+        $fuelUsedPerDay = [];
+        $fuelUsedPerMonth = [];
+        $fuelUsedAll = []; // ✅ untuk chart “Semua Data”
 
-    private function getVehiclesByCompany($company)
-    {
-        $table = TableManager::getCompanyTable($company);
-        return DB::table($table)->get();
-    }
+        $costPerLiter = 13500;
+        $totalFuelUsed = 0;
 
-    private function analyzeFuelData($vehicles, $user)
-    {
-        $analysis = [
-            'average_consumption' => [],
-            'fuel_efficiency' => [],
-            'cost_analysis' => [],
-        ];
+        foreach ($records as $r) {
+            $fuelOut = $r->fuel_out ?? 0;
+            $totalFuelUsed += $fuelOut;
 
-        foreach ($vehicles as $vehicle) {
-            $fuelOut = $vehicle->fuel_out ?? 0;
-            $fuelLevel = $vehicle->fuel_level ?? 0;
+            $hourKey  = Carbon::parse($r->recorded_at)->format('Y-m-d H:00');
+            $dayKey   = Carbon::parse($r->recorded_at)->format('Y-m-d');
+            $monthKey = Carbon::parse($r->recorded_at)->format('Y-m');
 
-            $averageConsumption = $fuelOut > 0 ? $fuelOut / 1 : 0;
-            $efficiency = ($fuelLevel > 0) ? $fuelOut / $fuelLevel : 0;
-            $cost = $fuelOut * 13000;
+            $fuelUsedPerHour[$hourKey]   = ($fuelUsedPerHour[$hourKey] ?? 0) + $fuelOut;
+            $fuelUsedPerDay[$dayKey]     = ($fuelUsedPerDay[$dayKey] ?? 0) + $fuelOut;
+            $fuelUsedPerMonth[$monthKey] = ($fuelUsedPerMonth[$monthKey] ?? 0) + $fuelOut;
 
-            $analysis['average_consumption'][$vehicle->nik] = $averageConsumption;
-            $analysis['fuel_efficiency'][$vehicle->nik] = $efficiency;
-            $analysis['cost_analysis'][$vehicle->nik] = $cost;
+            // semua data (langsung urut sesuai waktu)
+            $fuelUsedAll[$r->recorded_at] = $fuelOut;
         }
 
-        return $analysis;
-    }
+        // 🔹 Biaya & Efisiensi
+        $totalCost = $totalFuelUsed * $costPerLiter;
+        $avgFuelLevel = $records->avg('fuel_level');
+        $efficiency = $avgFuelLevel > 0
+            ? round(($totalFuelUsed / $avgFuelLevel) * 100, 2)
+            : 0;
 
-    private function getTrendData($vehicles, $company, $startDate = null, $endDate = null)
-    {
-        $trendData = [];
-
-        foreach ($vehicles as $vehicle) {
-            $query = DB::table(TableManager::getCompanyTable($company))
-                ->where('nik', $vehicle->nik);
-
-            if ($startDate && $endDate) {
-                $query->whereBetween('recorded_at', [$startDate, $endDate]);
-            }
-
-            $records = $query->get();
-
-            foreach ($records as $record) {
-                $dateTime = Carbon::parse($record->recorded_at)->format('Y-m-d H:i');
-
-                if (!isset($trendData[$vehicle->nik])) {
-                    $trendData[$vehicle->nik] = [
-                        'nik' => $vehicle->nik,
-                        'data' => []
-                    ];
-                }
-
-                $trendData[$vehicle->nik]['data'][$dateTime] = $record->fuel_level;
-            }
-        }
-
-        $formattedData = [];
-        foreach ($trendData as $vehicle) {
-            foreach ($vehicle['data'] as $dateTime => $level) {
-                if (!isset($formattedData[$dateTime])) {
-                    $formattedData[$dateTime] = ['date' => $dateTime];
-                }
-                $formattedData[$dateTime][$vehicle['nik']] = $level;
-            }
-        }
-
-        return array_values($formattedData);
+        return view('analysis.index', [
+            'records' => $records,
+            'fuelUsedPerHour' => $fuelUsedPerHour,
+            'fuelUsedPerDay' => $fuelUsedPerDay,
+            'fuelUsedPerMonth' => $fuelUsedPerMonth,
+            'fuelUsedAll' => $fuelUsedAll, // ✅ untuk chart semua data
+            'totalFuelUsed' => $totalFuelUsed,
+            'totalCost' => $totalCost,
+            'efficiency' => $efficiency,
+            'company' => $company,
+            'nik' => $nik,
+            'start' => $start,
+            'end' => $end,
+        ]);
     }
 }

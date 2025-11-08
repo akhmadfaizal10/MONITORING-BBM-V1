@@ -54,7 +54,7 @@ class TableManager
                 $t->float('fuel_level');            // level BBM (liter)
                 $t->float('fuel_in')->default(0);   // pengisian (liter)
                 $t->float('fuel_out')->default(0);  // konsumsi (liter)
-                $t->string('status')->default('null'); // hasil deteksi ML
+                $t->string('status')->default('normal'); // hasil deteksi ML
                 $t->string('location')->nullable(); // lokasi GPS / area
                 $t->timestamp('recorded_at');       // waktu data tercatat
                 $t->timestamps();                   // created_at, updated_at

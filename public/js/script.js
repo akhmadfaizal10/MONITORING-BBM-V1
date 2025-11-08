@@ -69,7 +69,15 @@ function renderCompanies() {
         const hasAlerts = stats.alerts > 0;
         return `
             <div class="card" onclick="selectCompany('${company}')" style="animation-delay: ${index * 0.1}s">
-                <div class="card-header"><div class="card-header-content"><div class="card-header-left"><div class="card-icon">${icons.building}</div><h2 class="card-title">${company}</h2></div>${hasAlerts ? `<div class="alert-icon">${icons.alert}</div>` : ''}</div></div>
+<div class="card-header">
+  <div class="card-header-content">
+    <div class="card-header-left" style="display: flex; align-items: center; gap: 10px;">
+      <div class="card-icon">${icons.building}</div>
+      <h2 class="card-title" style="margin: 0;">${company}</h2>
+    </div>
+    ${hasAlerts ? `<div class="alert-icon" style="margin-left: auto;">${icons.alert}</div>` : ''}
+  </div>
+</div>
                 <div class="card-body">
                     <div class="total-vehicles"><div class="total-vehicles-left">${icons.car}<span>Total Vehicles</span></div><div class="total-vehicles-right"><span>${stats.total}</span>${icons.trending}</div></div>
                     <div class="stats-grid">
@@ -80,7 +88,7 @@ function renderCompanies() {
                 </div>
             </div>
         `;
-    }).join('');
+    }).join('');   
 }
 
 function renderTable() {
@@ -89,7 +97,6 @@ function renderTable() {
     const stats = getCompanyStats(selectedCompany);
     tableView.innerHTML = `
         <div class="table-card">
-            <div class="table-header"><div class="table-header-left">${icons.car}<span>Fleet Overview - ${selectedCompany}</span></div><span class="badge">${filteredVehicles.length} Vehicles</span></div>
             <div class="table-wrapper">
                 <table>
                     <thead><tr><th><div>${icons.creditCard} NIK</div></th><th><div>${icons.car} Vehicle ID</div></th><th><div>${icons.activity} Status</div></th><th><div>${icons.fuel} Fuel Level</div></th><th><div>${icons.clock} Last Update</div></th></tr></thead>
@@ -104,7 +111,7 @@ function renderTable() {
                                     <td><span class="code-badge">${v.nik}</span></td>
                                     <td><span class="code-badge">${v.vehicle_id}</span></td>
                                     <td><span class="status-badge ${statusConfig.class}">${statusConfig.icon} ${statusText}</span></td>
-                                    <td><div class="fuel-level"><div class="fuel-bar-container"><div class="fuel-bar ${fuelClass}" style="width: ${fuelLevelText}"></div></div><span class="fuel-text">${fuelLevelText}</span></div></td>
+                                    <td style="text-align: left; padding-left:40px;"><span class="fuel-text">${fuelLevelText}</span></td>
                                     <td><div class="last-update"><div class="update-indicator"></div> ${v.recorded_at}</div></td>
                                 </tr>
                             `;
@@ -129,7 +136,7 @@ function selectCompany(company) {
     const backButton = document.getElementById('backButton');
     backButton.innerHTML = `<button class="back-button" onclick="goBack()">${icons.chevronLeft}</button>`;
     backButton.classList.remove('hidden');
-    document.getElementById('headerSubtitle').textContent = `Viewing fleet data for ${company}`;
+    document.getElementById('headerSubtitle').textContent = `Viewing data for ${company}`;
     renderTable();
 }
 
@@ -138,7 +145,7 @@ function goBack() {
     document.getElementById('tableView').classList.add('hidden');
     document.getElementById('companiesView').classList.remove('hidden');
     document.getElementById('backButton').classList.add('hidden');
-    document.getElementById('headerSubtitle').textContent = 'Real-time fleet tracking • Select a company to begin';
+    document.getElementById('headerSubtitle').textContent = 'Real-time tracking • Select a company to begin';
 }
 
 document.addEventListener('DOMContentLoaded', () => {

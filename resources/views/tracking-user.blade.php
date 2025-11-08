@@ -10,38 +10,16 @@
 
 @section('content')
 <div class="container">
-    <div class="header">
-        <div class="header-title">
-            <div class="status-indicator"></div>
-            <span>Tracking Kendaraan</span>
-        </div>
-        <div class="header-subtitle">
-            <span id="headerSubtitle">Realtime Vehicle Monitoring Dashboard</span>
-        </div>
-    </div>
+   
 
     @if($vehicles && count($vehicles) > 0)
     <div class="table-card">
-        <div class="table-header">
-            <div class="table-header-left">
-                <div class="icon">
-                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h2m-6 0h4"/>
-                    </svg>
-                </div>
-                <span>Data Kendaraan</span>
-            </div>
-        </div>
+      
         <div class="table-wrapper">
             <table>
-                <thead>
-                    <tr>
-                        <th>NIK</th>
-                        <th>Vehicle ID</th>
-                        <th>Status</th>
-                        <th>Fuel Level</th>
-                        <th>Terakhir Dilaporkan</th>
-                    </tr>
-                </thead>
+                 <thead id="table-head">
+        <!-- Akan diisi oleh JS -->
+    </thead>
                 <tbody>
                     @foreach ($vehicles as $index => $v)
                         @php
@@ -164,4 +142,28 @@
         </div>
     @endif
 </div>
+@push('scripts')
+<script>
+    const icons = {
+        creditCard: '<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>',
+        car: '<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h2m-6 0h4"/></svg>',
+        activity: '<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>',
+        fuel: '<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v5a3 3 0 003 3h1a3 3 0 003-3v-5a3 3 0 00-3-3h-1a3 3 0 00-3 3zm0 0V9a3 3 0 013-3h1a3 3 0 013 3v2m-6 0h6m-3 5v5m-3-13h.01" /></svg>',
+        clock: '<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+    };
+
+    // Isi thead dengan innerHTML
+    const tableHead = document.getElementById('table-head');
+    tableHead.innerHTML = `
+        <tr>
+            <th><div>${icons.creditCard} NIK</div></th>
+            <th><div>${icons.car} Vehicle ID</div></th>
+            <th><div>${icons.activity} Status</div></th>
+            <th><div>${icons.fuel} Fuel Level</div></th>
+            <th><div>${icons.clock} Last Update</div></th>
+        </tr>
+    `;
+</script>
+@endpush
+
 @endsection

@@ -36,11 +36,11 @@ class DashboardController extends Controller
         $user = Auth::user(); // Harus login sebagai admin
 
         // Periksa jika user bukan admin
-        if (!$user || $user->role !== 'admin') {
-            return response()->json([
-                'data' => [], 'total' => 0, 'error' => 'Unauthorized role'
-            ], 403);
-        }
+        // if (!$user || $user->role !== 'admin') {
+        //     return response()->json([
+        //         'data' => [], 'total' => 0, 'error' => 'Unauthorized role'
+        //     ], 403);
+        // }
 
         $company = $request->query('company');
         $status  = $request->query('status', 'all');
@@ -85,7 +85,7 @@ class DashboardController extends Controller
 
         $total = $query->count();
         $data = $query
-            ->select('vehicle_id', 'status', 'fuel_in', 'fuel_out', 'recorded_at') // Hapus 'nik' dari sini
+            ->select('nik','vehicle_id', 'status', 'fuel_in', 'fuel_out', 'recorded_at') // Hapus 'nik' dari sini
             ->orderBy('recorded_at', 'desc')
             ->offset(($page - 1) * $perPage)
             ->limit($perPage)
