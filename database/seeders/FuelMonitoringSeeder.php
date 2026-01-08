@@ -15,10 +15,11 @@ class FuelMonitoringSeeder extends Seeder
         $faker = Faker::create('id_ID');
         $controller = new MonitoringController();
 
-        // 🔹 Kota di Kalimantan
-        $kalimantanCities = [
-            'Balikpapan', 'Samarinda', 'Banjarmasin', 'Pontianak',
-            'Palangkaraya', 'Tarakan', 'Tanjung Selor', 'Singkawang', 'Banjarbaru'
+        // 🔹 Lokasi utama per perusahaan beserta longitude dan latitude
+        $locations = [
+            'Udinus' => ['longitude' => 116.8312, 'latitude' => -1.2660], // Balikpapan
+            'ProAnekaCipta' => ['longitude' => 116.8312, 'latitude' => -1.2660], // Balikpapan
+            'ppsdm' => ['longitude' => 116.8312, 'latitude' => -1.2660], // Balikpapan
         ];
 
         // 🔹 Jenis kendaraan pertambangan
@@ -33,16 +34,9 @@ class FuelMonitoringSeeder extends Seeder
             'Crane',
         ];
 
-        // 🔹 Daftar perusahaan
-        $companies = [
-            'Udinus',
-            'ProAnekaCipta'
-            ,'ppsdm',
-        ];
-
-        foreach ($companies as $company) {
+        foreach ($locations as $company => $location) {
             // Tiap perusahaan 2–4 kendaraan
-            $vehicleCount = rand(2, 15);
+            $vehicleCount = rand(2, 4); // Ubah untuk 2-4 kendaraan
 
             for ($v = 1; $v <= $vehicleCount; $v++) {
                 $nik = 'K' . str_pad($v, 2, '0', STR_PAD_LEFT);
@@ -71,7 +65,10 @@ class FuelMonitoringSeeder extends Seeder
                         }
 
                         $recordedAt = (clone $date)->addMinutes($i * 5);
-                        $location = $faker->randomElement($kalimantanCities);
+                        
+                        // Mengacak longitude dan latitude dalam jarak tertentu (misalnya 0.001 derajat)
+                        $longitude = $location['longitude'] + $faker->randomFloat(5, -0.001, 0.001);
+                        $latitude = $location['latitude'] + $faker->randomFloat(5, -0.001, 0.001);
 
                         $req = new Request([
                             'company'     => $company,
@@ -79,7 +76,8 @@ class FuelMonitoringSeeder extends Seeder
                             'vehicle_id'  => $vehicleType, // ⬅️ type kendaraan
                             'fuel_level'  => $fuelLevel,
                             'recorded_at' => $recordedAt->toDateTimeString(),
-                            'location'    => $location,
+                            'longitude'   => $longitude,
+                            'latitude'    => $latitude,
                         ]);
 
                         $controller->store($req);
