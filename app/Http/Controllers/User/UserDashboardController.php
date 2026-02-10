@@ -160,12 +160,12 @@ class UserDashboardController extends Controller
     }
 
     $statusDistribution = [
-        'labels' => ['Normal', 'Refuel', 'Theft', 'Plugged Theft'],
+        'labels' => ['Normal', 'Refuel', 'Theft'],
         'data' => [
             $statusCounts['normal'],
             $statusCounts['refuel'],
             $statusCounts['theft'],
-            $statusCounts['plugged_theft'],
+            
         ],
     ];
 

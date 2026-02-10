@@ -14,7 +14,7 @@
 <div class="header-subtitle d-flex align-items-center gap-3 mt-4">
     <span id="backButton" class="hidden"></span>
     <div class="status-indicator hidden"></div>
-    <p id="headerSubtitle" class="mb-0 flex-grow-1">Real-time fleet tracking • Select a company to begin</p>
+    <p id="headerSubtitle" class="mb-0 flex-grow-1">Real-time  tracking • Select a company to begin</p>
 </div>
 
     </div>
@@ -30,7 +30,7 @@
 @push('scripts')
 {{-- Mengirim data dari Controller ke JavaScript dengan aman --}}
 <script>
-    const companyData = @json($vehicles);
+    let companyData = @json($vehicles);
 </script>
 
 {{-- Memanggil file JavaScript utama untuk logika tampilan --}}

@@ -29,26 +29,63 @@
     @if(isset($message))
         <div class="alert alert-info shadow-sm">{{ $message }}</div>
     @else
-        <div class="row g-3 mb-4 text-center">
-            <div class="col-md-4">
-                <div class="card border-0 shadow-sm bg-white p-3">
-                    <h6 class="text-muted mb-1">Total BBM Digunakan</h6>
-                    <h4 class="fw-bold">{{ number_format($totalFuelUsed, 2) }} L</h4>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card border-0 shadow-sm bg-white p-3">
-                    <h6 class="text-muted mb-1">Total Biaya BBM</h6>
-                    <h4 class="fw-bold text-success">Rp {{ number_format($totalCost, 0, ',', '.') }}</h4>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card border-0 shadow-sm bg-white p-3">
-                    <h6 class="text-muted mb-1">Efisiensi</h6>
-                    <h4 class="fw-bold text-info">{{ $efficiency }}%</h4>
-                </div>
+       <div class="row g-3 mb-4 text-center">
+
+    {{-- TOTAL BBM --}}
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex flex-column justify-content-center">
+                <h6 class="text-muted mb-1">Total BBM Digunakan</h6>
+                <h4 class="fw-bold">
+                    {{ number_format($totalFuelUsed, 2) }} L
+                </h4>
             </div>
         </div>
+    </div>
+
+    {{-- TOTAL BIAYA --}}
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex flex-column justify-content-center">
+                <h6 class="text-muted mb-1">Total Biaya BBM</h6>
+                <h4 class="fw-bold text-success">
+                    Rp {{ number_format($totalCost, 0, ',', '.') }}
+                </h4>
+            </div>
+        </div>
+    </div>
+
+    {{-- EFISIENSI --}}
+    <div class="col-md-4">
+        @php
+            if ($efficiency > 30) {
+                $effColor = 'success';
+                $effText  = '🟢 Aman';
+            } elseif ($efficiency >= 10) {
+                $effColor = 'warning';
+                $effText  = '🟡 Warning';
+            } else {
+                $effColor = 'danger';
+                $effText  = '🔴 Over Budget Risk';
+            }
+        @endphp
+
+        <div class="card border-0 shadow-sm h-100 bg-{{ $effColor }} text-white">
+            <div class="card-body d-flex flex-column justify-content-center">
+                <h6 class="mb-1">Efisiensi</h6>
+
+                <h2 class="fw-bold mb-1">
+                    {{ number_format($efficiency, 2) }}%
+                </h2>
+
+                <small class="fw-semibold">
+                    {{ $effText }}
+                </small>
+            </div>
+        </div>
+    </div>
+
+</div>
 
         <div class="card border-0 shadow-sm bg-white p-4">
             <div class="d-flex justify-content-between align-items-center mb-3">

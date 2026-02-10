@@ -2,6 +2,7 @@
 // Strukturnya adalah Object, Contoh: { "Pt Agro Mandiri": [ {vehicle...}, ... ] }
 
 let selectedCompany = null;
+let isRefreshing = false;
 
 // Objek Ikon
 const icons = {
@@ -123,7 +124,7 @@ function renderTable() {
         <div class="footer-stats">
             <div class="footer-stat-card total"><div class="footer-stat-header"><div class="footer-stat-icon">${icons.car}</div><div class="footer-stat-label">Total Vehicles</div></div><div class="footer-stat-value">${stats.total}</div></div>
             <div class="footer-stat-card normal"><div class="footer-stat-header"><div class="footer-stat-icon">${icons.check}</div><div class="footer-stat-label">Normal</div></div><div class="footer-stat-value">${stats.normal}</div></div>
-            <div class="footer-stat-card refuel"><div class="footer-stat-header"><div class="footer-stat-icon">${icons.droplet}</div><div class="footer-stat-label">Need Refuel</div></div><div class="footer-stat-value">${stats.refuel}</div></div>
+            <div class="footer-stat-card refuel"><div class="footer-stat-header"><div class="footer-stat-icon">${icons.droplet}</div><div class="footer-stat-label"> Refuel</div></div><div class="footer-stat-value">${stats.refuel}</div></div>
             <div class="footer-stat-card alerts"><div class="footer-stat-header"><div class="footer-stat-icon">${icons.alert}</div><div class="footer-stat-label">Alerts</div></div><div class="footer-stat-value">${stats.alerts}</div></div>
         </div>
     `;
@@ -151,3 +152,61 @@ function goBack() {
 document.addEventListener('DOMContentLoaded', () => {
     renderCompanies();
 });
+
+// ===============================
+// 🔄 AUTO REFRESH DATA (AJAX)
+// ===============================
+async function refreshTrackingData() {
+    if (isRefreshing) return; // ⛔ cegah double render
+    isRefreshing = true;
+
+    try {
+        const res = await fetch('/tracking/data', {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+
+        if (!res.ok) throw new Error('Fetch gagal');
+
+        const data = await res.json();
+
+        // update data saja
+       companyData = deduplicateCompanyData(data);
+
+
+        // render sesuai state aktif
+        if (selectedCompany) {
+            renderTable();       // ⬅ hanya update tabel
+        } else {
+            renderCompanies();  // ⬅ hanya update card
+        }
+
+    } catch (err) {
+        console.error('Auto refresh gagal:', err);
+    } finally {
+        isRefreshing = false;
+    }
+}
+
+function deduplicateCompanyData(data) {
+    const cleaned = {};
+
+    Object.keys(data).forEach(company => {
+        const seen = new Set();
+
+        cleaned[company] = data[company].filter(v => {
+            const key = `${v.nik}_${v.vehicle_id}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        });
+    });
+
+    return cleaned;
+}
+
+// 🔁 refresh tiap 5 detik (aman)
+setInterval(() => {
+    if (!document.hidden) {
+        refreshTrackingData();
+    }
+}, 5000);

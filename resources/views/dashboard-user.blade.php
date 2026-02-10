@@ -210,47 +210,7 @@
     @endauth
 
     {{-- ======= TABLE HASIL ======= --}}
-   <div id="resultSection" class="mt-5" style="display: none;">
-    <div class="card border-0 shadow-sm">
-        <div class="card-body"> <!-- Tambahkan card-body di sini untuk styling yang konsisten -->
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="fw-bold mb-0" style="padding: 15px;">
-                    Data <span id="selectedStatus">Semua</span> - <span id="selectedCompany"></span>
-                </h5>
-                <div class="d-flex align-items-center">
-                    <div id="loader" style="display:none; text-align:center;">Sedang memuat data...</div>
-                    <select id="dateFilter" class="form-select w-auto me-2">
-                        <option value="today">Hari Ini</option>
-                        <option value="7days">7 Hari Terakhir</option>
-                        <option value="custom">Rentang Tanggal</option>
-                    </select>
-                    <input type="date" id="startDate" class="form-control w-auto me-2" style="display:none;">
-                    <input type="date" id="endDate" class="form-control w-auto me-2" style="display:none;">
-                    <button id="applyDate" class="btn btn-primary" style="display:none;">Terapkan</button>
-                </div>
-            </div>
-
-            <table class="table table-striped align-middle">
-                <thead>
-                    <tr>
-                        <th style="padding-left: 15px;">Vehicle ID</th>
-                        <th>Status</th>
-                        <th>Fuel In</th>
-                        <th>Fuel Out</th>
-                        <th>Waktu</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody">
-                    <tr>
-                        <td colspan="5" class="text-center text-muted" style="padding: 15px;">Memuat data...</td> <!-- Kolom span diubah menjadi 5 untuk mencakup semua kolom -->
-                    </tr>
-                </tbody>
-            </table>
-
-            <div id="paginationControls" class="d-flex justify-content-between mt-3"></div>
-        </div>
-    </div>
-</div>
+  
 @endsection
 
 @push('scripts')

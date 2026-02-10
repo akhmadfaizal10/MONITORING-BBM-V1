@@ -1,111 +1,224 @@
 @extends('app')
 
-@section('title', 'Analisis Bahan Bakar - Admin')
+@section('title', 'Analisis BBM - Admin')
 
 @section('content')
-@php
-    $fuelData = []; // Initialize the variable to avoid undefined error
-@endphp
+<div class="container-fluid py-4" style="background-color:#f8f9fa; min-height:100vh;">
 
-<style>
-    /* Your existing styles */
-</style>
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <h3 class="fw-bold mb-3 text-primary">
+                Analisis BBM - ADMIN
+            </h3>
 
-<div class="container mx-auto mt-10 pt-10">
-    <h2>Analisis Bahan Bakar Kendaraan - Admin</h2>
+            {{-- FILTER --}}
+            <form class="row g-3 align-items-end mb-3" method="GET">
 
-    <!-- Filters -->
-    <div>
-        <label for="companySelect">Pilih Perusahaan:</label>
-        <select id="companySelect">
-            <!-- Populate this with companies dynamically, if needed -->
-        </select>
-        
-        <label for="statusSelect">Pilih Status:</label>
-        <select id="statusSelect">
-            <option value="all">Semua</option>
-            <option value="normal">Normal</option>
-            <option value="refuel">Pengisian</option>
-            <option value="theft">Pencurian</option>
-            <option value="plugged_theft">Pencurian Terhubung</option>
-        </select>
+                {{-- COMPANY --}}
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Perusahaan:</label>
+                   <select name="company" class="form-select shadow-sm" required>
+    <option value="">-- Pilih Perusahaan --</option>
 
-        <label for="dateSelect">Pilih Tanggal:</label>
-        <select id="dateSelect">
-            <option value="today">Hari Ini</option>
-            <option value="7days">7 Hari Terakhir</option>
-            <option value="custom">Kustom</option>
-            <!-- Add more date options here if needed -->
-        </select>
+    @foreach($companyList as $c)
+        <option value="{{ $c }}"
+            {{ request('company') === $c ? 'selected' : '' }}>
+            {{ $c }}
+        </option>
+    @endforeach
+</select>
 
-        <button id="applyFilters">Terapkan</button>
+                </div>
+
+                {{-- START --}}
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Dari:</label>
+                    <input type="datetime-local"
+                           name="start"
+                           class="form-control shadow-sm"
+                           value="{{ $start }}">
+                </div>
+
+                {{-- END --}}
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Sampai:</label>
+                    <input type="datetime-local"
+                           name="end"
+                           class="form-control shadow-sm"
+                           value="{{ $end }}">
+                </div>
+
+                {{-- NIK --}}
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">NIK (opsional):</label>
+                    <input type="text"
+                           name="nik"
+                           class="form-control shadow-sm"
+                           value="{{ $nik }}">
+                </div>
+
+                <div class="col-md-12">
+                    <button class="btn btn-primary w-100 shadow-sm">
+                        <i class="bi bi-search"></i> Terapkan Filter
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
-    <div id="loader" style="display:none;">Loading...</div>
+    {{-- MESSAGE --}}
+    @if(isset($message))
+        <div class="alert alert-info shadow-sm">
+            {{ $message }}
+        </div>
+    @else
 
-    <div id="tableContainer">
-        <!-- Render the table data dynamically here -->
-        <table id="dataTable">
-            <thead>
-                <tr>
-                    <th>ID Kendaraan</th>
-                    <th>Status</th>
-                    <th>Fuel In</th>
-                    <th>Fuel Out</th>
-                    <th>Tanggal</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody">
-                <!-- Data rows will be inserted here -->
-            </tbody>
-        </table>
+        {{-- SUMMARY --}}
+     <div class="row g-3 mb-4 text-center">
+
+    {{-- TOTAL BBM --}}
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex flex-column justify-content-center">
+                <h6 class="text-muted mb-1">Total BBM Digunakan</h6>
+                <h4 class="fw-bold">
+                    {{ number_format($totalFuelUsed, 2) }} L
+                </h4>
+            </div>
+        </div>
     </div>
 
-    <!-- Chart for fuel consumption -->
-    <div class="bg-white shadow-lg rounded-lg p-6 mt-5">
-        <h3>Konsumsi Bahan Bakar (7 Hari Terakhir)</h3>
-        <canvas id="fuelConsumptionChart"></canvas>
+    {{-- TOTAL BIAYA --}}
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex flex-column justify-content-center">
+                <h6 class="text-muted mb-1">Total Biaya BBM</h6>
+                <h4 class="fw-bold text-success">
+                    Rp {{ number_format($totalCost, 0, ',', '.') }}
+                </h4>
+            </div>
+        </div>
     </div>
+
+    {{-- EFISIENSI --}}
+    <div class="col-md-4">
+        @php
+            if ($efficiency > 30) {
+                $effColor = 'success';
+                $effText  = '🟢 Aman';
+            } elseif ($efficiency >= 10) {
+                $effColor = 'warning';
+                $effText  = '🟡 Warning';
+            } else {
+                $effColor = 'danger';
+                $effText  = '🔴 Over Budget Risk';
+            }
+        @endphp
+
+        <div class="card border-0 shadow-sm h-100 bg-{{ $effColor }} text-white">
+            <div class="card-body d-flex flex-column justify-content-center">
+                <h6 class="mb-1">Efisiensi</h6>
+
+                <h2 class="fw-bold mb-1">
+                    {{ number_format($efficiency, 2) }}%
+                </h2>
+
+                <small class="fw-semibold">
+                    {{ $effText }}
+                </small>
+            </div>
+        </div>
+    </div>
+
 </div>
 
+
+        {{-- CHART --}}
+        <div class="card border-0 shadow-sm bg-white p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0">
+                    <i class="bi bi-graph-up"></i> Tren Konsumsi BBM
+                </h5>
+
+                <select id="trendType" class="form-select w-auto shadow-sm">
+                    <option value="hourly">Per Jam</option>
+                    <option value="daily" selected>Per Hari</option>
+                    <option value="monthly">Per Bulan</option>
+                    <option value="all">Semua Data</option>
+                </select>
+            </div>
+
+            <div style="height:450px;">
+                <canvas id="bbmChart"></canvas>
+            </div>
+        </div>
+
+    @endif
+</div>
+
+{{-- CHART.JS --}}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    document.getElementById('applyFilters').addEventListener('click', async function() {
-        const loader = document.getElementById('loader');
-        const tableBody = document.getElementById('tableBody');
-        loader.style.display = "block";
-        tableBody.innerHTML = ""; // Clear existing data
+let chartInstance;
+const ctx = document.getElementById('bbmChart');
 
-        const selectedCompany = document.getElementById('companySelect').value;
-        const selectedStatus = document.getElementById('statusSelect').value;
-        const selectedDate = document.getElementById('dateSelect').value;
+function renderChart(type) {
+    if (chartInstance) chartInstance.destroy();
 
-        const url = `/analysis/getData?company=${encodeURIComponent(selectedCompany)}&status=${encodeURIComponent(selectedStatus)}&date=${encodeURIComponent(selectedDate)}`;
-        const res = await fetch(url);
-        const data = await res.json();
+    let labels = [];
+    let data   = [];
 
-        loader.style.display = "none";
+    switch (type) {
+        case 'hourly':
+            labels = {!! json_encode(array_keys($fuelUsedPerHour ?? [])) !!};
+            data   = {!! json_encode(array_values($fuelUsedPerHour ?? [])) !!};
+            break;
 
-        // Render the table data
-        renderTable(data);
-    });
+        case 'monthly':
+            labels = {!! json_encode(array_keys($fuelUsedPerMonth ?? [])) !!};
+            data   = {!! json_encode(array_values($fuelUsedPerMonth ?? [])) !!};
+            break;
 
-    function renderTable(data) {
-        const tableBody = document.getElementById('tableBody');
-        data.data.forEach(row => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${row.vehicle_id}</td>
-                <td>${row.status}</td>
-                <td>${row.fuel_in}</td>
-                <td>${row.fuel_out}</td>
-                <td>${new Date(row.recorded_at).toLocaleString()}</td>
-            `;
-            tableBody.appendChild(tr);
-        });
+        case 'all':
+            labels = {!! json_encode(array_keys($fuelUsedAll ?? [])) !!};
+            data   = {!! json_encode(array_values($fuelUsedAll ?? [])) !!};
+            break;
+
+        default:
+            labels = {!! json_encode(array_keys($fuelUsedPerDay ?? [])) !!};
+            data   = {!! json_encode(array_values($fuelUsedPerDay ?? [])) !!};
     }
 
-    // Initialize the chart here
-    // You'll also want to ensure data is available for rendering the chart
+    chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Pemakaian BBM (Liter)',
+                data,
+                borderColor: '#0d6efd',
+                backgroundColor: 'rgba(13,110,253,0.12)',
+                borderWidth: 2,
+                tension: 0.4,
+                fill: true,
+                pointRadius: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, title: { display: true, text: 'Liter' }},
+                x: { title: { display: true, text: 'Waktu' }}
+            }
+        }
+    });
+}
+
+renderChart('daily');
+
+document.getElementById('trendType')
+    .addEventListener('change', e => renderChart(e.target.value));
 </script>
 @endsection

@@ -5,54 +5,79 @@
 @push('styles')
     <link rel="stylesheet" href="{{ asset('style.css') }}">
 @endpush
+
+@include('partials.style')
+
 @section('content')
-  <div class="form-section">
-    <h2 class="form-title">Select Company & Table</h2>
-    <div class="form-row">
-      <div class="form-group">
-        <label for="companySelect">Company</label>
-        <select id="companySelect"></select>
-      </div>
-      <div class="form-group">
-        <label for="tableSelect">Table (Company / Per-NIK)</label>
-        <select id="tableSelect"></select>
-      </div>
+<div class="container-fluid px-4 pt-4">
+
+    {{-- ===== FILTER SECTION ===== --}}
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Select Company & Table</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Company</label>
+                    <select id="companySelect" class="form-select"></select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Table (Company / Per-NIK)</label>
+                    <select id="tableSelect" class="form-select"></select>
+                </div>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 mt-4">
+                <button class="btn btn-primary" id="loadBtn">
+                    <i class="bi bi-arrow-repeat me-1"></i> Load
+                </button>
+                <button class="btn btn-secondary" id="exportBtn">
+                    <i class="bi bi-download me-1"></i> Export
+                </button>
+                <button class="btn btn-warning text-white" id="clearTableBtn">
+                    <i class="bi bi-eraser me-1"></i> Clear
+                </button>
+                <button class="btn btn-danger" id="deleteTableBtn">
+                    <i class="bi bi-trash me-1"></i> Delete Table
+                </button>
+                <button class="btn btn-danger" id="deleteCompanyBtn">
+                    <i class="bi bi-building-x me-1"></i> Delete Company
+                </button>
+            </div>
+        </div>
     </div>
 
-    <div class="button-group">
-      <button class="btn btn-primary" id="loadBtn">
-        <i class="fas fa-sync-alt"></i> Load
-      </button>
-      <button class="btn btn-secondary" id="exportBtn">
-        <i class="fas fa-download"></i> Export
-      </button>
-      <button class="btn btn-warning" id="clearTableBtn">
-        <i class="fas fa-eraser"></i> Clear
-      </button>
-      <button class="btn btn-danger" id="deleteTableBtn">
-        <i class="fas fa-trash"></i> Delete Table
-      </button>
-      <button class="btn btn-danger" id="deleteCompanyBtn">
-        <i class="fas fa-trash"></i> Delete Company
-      </button>
-    </div>
-  </div>
+    {{-- ===== DATA SECTION ===== --}}
+    <div class="card shadow-sm border-0">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                Data (<span id="recordCount">0</span> records)
+            </h5>
+            <input type="text"
+                   id="searchBox"
+                   class="form-control w-auto"
+                   placeholder="Search records..." style="display:none;">
+        </div>
 
-  <div class="data-section">
-    <div class="data-header">
-      <h2>Data (<span id="recordCount">0</span> records)</h2>
-      <input type="text" id="searchBox" class="search-box" placeholder="Search records...">
+        <div class="card-body">
+            <div class="table-responsive" id="tableContainer">
+                <div class="text-center text-muted py-5">
+                    Pilih company & table untuk melihat data
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <button class="btn btn-outline-secondary" id="prevPage">Previous</button>
+                <span class="fw-semibold" id="pageInfo">Page 1</span>
+                <button class="btn btn-outline-secondary" id="nextPage">Next</button>
+            </div>
+        </div>
     </div>
 
-    <div class="table-container" id="tableContainer"></div>
-
-    <div class="pagination">
-      <button class="btn btn-secondary" id="prevPage">Previous</button>
-      <span class="page-info" id="pageInfo">Page 1</span>
-      <button class="btn btn-secondary" id="nextPage">Next</button>
-    </div>
-  </div>
+</div>
 @endsection
+
 
 @push('scripts')
 <script>

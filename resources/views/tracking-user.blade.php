@@ -122,7 +122,7 @@
                 <div class="footer-stat-icon">
                     <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 22a7 7 0 0 0 7-7c0-3.87-7-13-7-13s-7 9.13-7 13a7 7 0 0 0 7 7z" /></svg>
                 </div>
-                <div class="footer-stat-label">Need Refuel</div>
+                <div class="footer-stat-label"> Refuel</div>
             </div>
             <div class="footer-stat-value">{{ $stats['refuel'] }}</div>
         </div>

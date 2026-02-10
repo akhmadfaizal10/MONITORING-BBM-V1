@@ -63,4 +63,53 @@ class TrackingController extends Controller
 
         return view('tracking', compact('vehicles'));
     }
+
+    public function fetch()
+{
+    $allTables = DB::select("SHOW TABLES LIKE 'company_%'");
+    $groupedTables = [];
+
+    foreach ($allTables as $table) {
+        $tableName = array_values((array) $table)[0];
+        $strippedName = str_replace('company_', '', $tableName);
+        $parts = explode('_', $strippedName);
+
+        $lastPart = end($parts);
+        if (count($parts) > 1 && preg_match('/[a-zA-Z]+\d+|\d+[a-zA-Z]+/', $lastPart)) {
+            array_pop($parts);
+        }
+
+        $parentName = ucwords(implode(' ', $parts));
+        $groupedTables[$parentName][] = $tableName;
+    }
+
+    $vehicles = [];
+
+    foreach ($groupedTables as $companyName => $tables) {
+        foreach ($tables as $tableName) {
+
+            // 🔴 PENTING: ambil data TERBARU per kendaraan
+            $latest = DB::table($tableName)
+                ->whereIn('id', function ($q) use ($tableName) {
+                    $q->select(DB::raw('MAX(id)'))
+                      ->from($tableName)
+                      ->groupBy('vehicle_id');
+                })
+                ->get();
+
+            foreach ($latest as $row) {
+                $vehicles[$companyName][] = [
+                    'nik'         => $row->nik,
+                    'vehicle_id'  => $row->vehicle_id,
+                    'status'      => $row->status,
+                    'fuel_level'  => $row->fuel_level,
+                    'recorded_at' => $row->recorded_at,
+                ];
+            }
+        }
+    }
+
+    return response()->json($vehicles);
+}
+
 }
